@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mariscos Recio - El mejor pescado fresco y marisco de la zona">
+    <title>Mariscos Recio - El Mar al Mejor Precio</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="img/logo.png" alt="Logo Mariscos Recio" class="logo-img">
+            <h1>Mariscos Recio</h1>
+        </div>
+        <div class="nav-links">
+            <a href="#inicio" >Inicio</a>
+            <a href="#productos" >Productos</a>
+            <a href="#sobre-nosotros" >Sobre Nosotros</a>
+            <a href="#contacto">Contacto</a>
+            <div class="cart-wrapper">
+                <a href="#carrito" class="cart-icon" >
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cart-count">0</span>
+                </a>
+            </div>
+            <div class="user-menu">
+   
+                        <div class="dropdown-content">
+                            <a href="mi-cuenta.php">Mi Cuenta</a>
+                            <a href="mis-pedidos.php">Mis Pedidos</a>
+                            <a href="logout.php">Cerrar Sesión</a>
+                        </div>
+                    </div>
+               
+                    <a href="login.php" >Iniciar Sesión</a>
+                    <a href="registro.php">Registrarse</a>
+      
+            </div>
+        </div>
+        <button class="menu-toggle" id="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <h1>Mariscos Recio</h1>
+            <div class="welcome-text">
+                <p class="welcome-header">BIENVENIDOS A LA PESCADERÍA MARISCOS RECIO</p>
+                <p>La empresa Mariscos Recio les da una calurosa bienvenida a la página 
+                   web oficial de su nuevo y mejorado sistema informático. 
+                   Aquí podrá realizar los pedidos que desee para su nevera, 
+                   chiringuito o congelador. Disponemos de una variedad de 
+                   productos del mar como sardinas, salmones, bogavantes y 
+                   otros productos más. Esperamos que disfrute de su compra.</p>
+            </div>
+            <a href="#productos" class="cta-button">Ver Productos</a>
+        </div>
+        <div class="hero-image">
+            <img src="img/hero-image.png" alt="Mariscos Frescos" class="hero-img">
+        </div>
+    </section>
+
+    <section id="productos" class="productos-section">
+        <h2>Nuestros Productos</h2>
+        <div class="filtros-productos">
+            <select id="categoria-filter">
+                <option value="">Todas las categorías</option>
+                <option value="pescados">Pescados</option>
+                <option value="mariscos">Mariscos</option>
+                <option value="congelados">Congelados</option>
+            </select>
+            <div class="search-box">
+                <input type="text" id="buscar-producto" placeholder="Buscar productos...">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+        <div id="productos-container" class="productos-grid"></div>
+        <div id="loading-spinner" class="spinner hidden"></div>
+    </section>
+
+    <section id="sobre-nosotros" class="sobre-nosotros-section">
+        <h2>Sobre Nosotros</h2>
+        <div class="sobre-nosotros-content">
+            <div class="sobre-nosotros-text">
+                <p>Mariscos Recio es una empresa familiar dedicada a la venta de productos frescos del mar. 
+                   Con años de experiencia en el sector, nos enorgullece ofrecer la mejor calidad a nuestros 
+                   clientes. Gracias por la confianza depositada en nosotros.</p>
+                <p>UN IMPERIO CREADO DESDE CERO</p>
+            </div>
+            <div class="sobre-nosotros-image">
+                <img src="assets/img/local.jpg" alt="Nuestro Local">
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="contacto-section">
+        <h2>Contacto</h2>
+        <div class="contacto-container">
+            <div class="contacto-info">
+                <h3>Información de Contacto</h3>
+                <p><i class="fas fa-map-marker-alt"></i> San Valentín, Malabo</p>
+                <p><i class="fas fa-phone"></i> +240 555 363 628</p>
+                <p><i class="fas fa-envelope"></i> info@mariscosrecio.com</p>
+                <div class="horario">
+                    <h4>Horario de Atención</h4>
+                    <p>Lunes a Viernes: 8:00 - 20:00</p>
+                    <p>Sábados: 9:00 - 14:00</p>
+                </div>
+            </div>
+            <form id="contacto-form" class="contacto-form">
+                <input type="text" name="nombre" placeholder="Nombre" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <textarea name="mensaje" placeholder="Mensaje" required></textarea>
+                <button type="submit">Enviar Mensaje</button>
+            </form>
+        </div>
+    </section>
+
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <?php if(!isset($_SESSION['usuario_id'])): ?>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Por favor, inicie sesión para realizar una compra.</p>
+                    <a href="login.php" class="btn-login">Iniciar Sesión</a>
+                </div>
+            <?php else: ?>
+                <div class="modal-header">
+                    <h2>Carrito de Compras</h2>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div id="cart-items" class="cart-items"></div>
+                <div class="cart-summary">
+                    <div id="cart-subtotal">Subtotal: 0.00€</div>
+                    <div id="cart-iva">IVA (21%): 0.00€</div>
+                    <div id="cart-total" class="cart-total">Total: 0.00€</div>
+                </div>
+                <div class="cart-buttons">
+                    <button onclick="vaciarCarrito()" class="btn-vaciar">
+                        <i class="fas fa-trash"></i> Vaciar Carrito
+                    </button>
+                    <button onclick="procesarCompra()" class="btn-comprar">
+                        <i class="fas fa-check"></i> Finalizar Compra
+                    </button>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div id="factura-modal" class="modal">
+        <div class="modal-content factura-container">
+            <div class="modal-header">
+                <h2>Factura de Compra</h2>
+                <span class="close-modal" onclick="cerrarFactura()">&times;</span>
+            </div>
+            <div class="factura-content">
+                <div class="factura-header">
+                    <div class="empresa-info">
+                        <h3>Mariscos Recio</h3>
+                        <p>San Valentín, Malabo</p>
+                        <p>Tel: +240 555 363 628</p>
+                    </div>
+                    <div id="factura-datos-cliente"></div>
+                </div>
+                <div class="factura-items">
+                    <h3>Productos Comprados</h3>
+                    <div id="factura-productos"></div>
+                </div>
+                <div class="factura-resumen">
+                    <div id="factura-subtotal"></div>
+                    <div id="factura-iva"></div>
+                    <div id="factura-total"></div>
+                </div>
+            </div>
+            <div class="factura-footer">
+                <button onclick="imprimirFactura()" class="print-button">
+                    <i class="fas fa-print"></i> Imprimir Factura
+                </button>
+                <button onclick="descargarFactura()" class="download-button">
+                    <i class="fas fa-download"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <p><i class="fas fa-envelope"></i> info@mariscosrecio.com</p>
+                <p><i class="fas fa-phone"></i> +240 555 363 628</p>
+                <p><i class="fas fa-map-marker-alt"></i> San Valentín, Malabo</p>
+            </div>
+            <div class="footer-section">
+                <h3>Síguenos</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-telegram"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <a href="politica-privacidad.php">Política de Privacidad</a>
+                <a href="terminos-condiciones.php">Términos y Condiciones</a>
+                <a href="preguntas-frecuentes.php">Preguntas Frecuentes</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Mariscos Recio - El Mar al Mejor Precio. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="js/productos.js"></script>
+    <script src="js/carrito.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
