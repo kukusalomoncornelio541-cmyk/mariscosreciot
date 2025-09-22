@@ -1,4 +1,4 @@
- class CarritoCompras {
+class CarritoCompras {
     constructor() {
         this.carrito = JSON.parse(localStorage.getItem('carrito')) || [];
         this.init();
@@ -20,7 +20,7 @@
         document.body.appendChild(notificacion);
         setTimeout(() => notificacion.remove(), 3000);
     }
-
+    
     agregarAlCarrito(productoId) {
         const producto = productos.find(p => p.id === productoId);
         if (!producto) return;
@@ -90,10 +90,19 @@
             </div>
         `).join('');
 
+        this.actualizarTotales(subtotal, iva, total);
+        this.actualizarContador();
+    }
+
+    actualizarTotales(subtotal, iva, total) {
         document.getElementById('cart-subtotal').textContent = `Subtotal: ${subtotal.toFixed(2)}€`;
         document.getElementById('cart-iva').textContent = `IVA (21%): ${iva.toFixed(2)}€`;
         document.getElementById('cart-total').textContent = `Total: ${total.toFixed(2)}€`;
-        document.getElementById('cart-count').textContent = this.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    }
+
+    actualizarContador() {
+        const contador = this.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+        document.getElementById('cart-count').textContent = contador;
     }
 
     modificarCantidad(index, cambio) {
@@ -111,61 +120,67 @@
     }
 
     async procesarCompra() {
-        if (this.carrito.length === 0) {
-            this.mostrarNotificacion('El carrito está vacío', 'error');
-            return;
-        }
-
-        if (!document.querySelector('.usuario-nombre')) {
-            this.mostrarNotificacion('Debe iniciar sesión para realizar la compra', 'error');
-            window.location.href = 'login.php';
-            return;
-        }
+        if (!this.validarCompra()) return;
 
         try {
-            const response = await fetch('obtener_datos_usuario.php');
-            const datosUsuario = await response.json();
+            const datosUsuario = await this.obtenerDatosUsuario();
             const { subtotal, iva, total } = this.calcularTotales();
 
+            await this.guardarPedido(datosUsuario, total);
             this.mostrarFactura(datosUsuario, subtotal, iva, total);
             
-            // Enviar pedido al servidor
-            await this.guardarPedido(datosUsuario, total);
-
-            this.carrito = [];
-            this.actualizarCarrito();
-            this.guardarCarrito();
-            
+            this.finalizarCompra();
         } catch (error) {
             console.error('Error al procesar la compra:', error);
             this.mostrarNotificacion('Error al procesar la compra', 'error');
         }
     }
 
-    async guardarPedido(datosUsuario, total) {
-        try {
-            const response = await fetch('api/guardar_pedido.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productos: this.carrito,
-                    total: total,
-                    usuario: datosUsuario
-                })
-            });
+    validarCompra() {
+        if (this.carrito.length === 0) {
+            this.mostrarNotificacion('El carrito está vacío', 'error');
+            return false;
+        }
 
-            const resultado = await response.json();
-            if (!resultado.success) {
-                throw new Error(resultado.mensaje);
-            }
-        } catch (error) {
-            throw new Error('Error al guardar el pedido');
+        if (!document.querySelector('.usuario-nombre')) {
+            this.mostrarNotificacion('Debe iniciar sesión para realizar la compra', 'error');
+            window.location.href = 'login.php';
+            return false;
+        }
+
+        return true;
+    }
+
+    async obtenerDatosUsuario() {
+        const response = await fetch('obtener_datos_usuario.php');
+        return await response.json();
+    }
+
+    async guardarPedido(datosUsuario, total) {
+        const response = await fetch('api/guardar_pedido.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                productos: this.carrito,
+                total: total,
+                usuario: datosUsuario
+            })
+        });
+
+        const resultado = await response.json();
+        if (!resultado.success) {
+            throw new Error(resultado.mensaje);
         }
     }
 
     mostrarFactura(datosUsuario, subtotal, iva, total) {
+        this.mostrarDatosCliente(datosUsuario);
+        this.mostrarProductosFactura();
+        this.mostrarTotalesFactura(subtotal, iva, total);
+        this.toggleModales();
+    }
+
+    mostrarDatosCliente(datosUsuario) {
         document.getElementById('factura-datos-cliente').innerHTML = `
             <p><strong>Cliente:</strong> ${datosUsuario.nombre}</p>
             <p><strong>Dirección:</strong> ${datosUsuario.direccion}</p>
@@ -174,20 +189,32 @@
             <p><strong>Email:</strong> ${datosUsuario.email}</p>
             <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
         `;
+    }
 
+    mostrarProductosFactura() {
         document.getElementById('factura-productos').innerHTML = this.carrito.map(item => `
             <div class="factura-item">
                 <span>${item.nombre} x${item.cantidad}</span>
                 <span>${(item.precio * item.cantidad).toFixed(2)}€</span>
             </div>
         `).join('');
+    }
 
+    mostrarTotalesFactura(subtotal, iva, total) {
         document.getElementById('factura-subtotal').textContent = `Subtotal: ${subtotal.toFixed(2)}€`;
         document.getElementById('factura-iva').textContent = `IVA (21%): ${iva.toFixed(2)}€`;
         document.getElementById('factura-total').textContent = `Total: ${total.toFixed(2)}€`;
+    }
 
+    toggleModales() {
         document.getElementById('cart-modal').style.display = 'none';
         document.getElementById('factura-modal').style.display = 'block';
+    }
+
+    finalizarCompra() {
+        this.carrito = [];
+        this.actualizarCarrito();
+        this.guardarCarrito();
     }
 
     guardarCarrito() {
@@ -195,10 +222,13 @@
     }
 
     setupEventListeners() {
-        document.querySelector('.cart-icon')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('cart-modal').style.display = 'block';
-        });
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            cartIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('cart-modal').style.display = 'block';
+            });
+        }
 
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -214,32 +244,11 @@
         };
     }
 }
-let carrito = [];
 
-function agregarAlCarrito(productoId) {
-    // Implementar lógica de agregar al carrito
-}
-
-function actualizarCarrito() {
-    const cartCount = document.getElementById('cart-count');
-    cartCount.textContent = carrito.length;
-    
-    const cartItems = document.getElementById('cart-items');
-    // Actualizar vista del carrito
-}
-
-function vaciarCarrito() {
-    carrito = [];
-    actualizarCarrito();
-}
-
-function procesarCompra() {
-    // Implementar lógica de compra
-}
 // Inicializar carrito
 const carritoCompras = new CarritoCompras();
 
-// Funciones globales necesarias para los onclick en el HTML
+// Funciones auxiliares para la factura
 function cerrarFactura() {
     document.getElementById('factura-modal').style.display = 'none';
     carritoCompras.mostrarNotificacion('¡Gracias por su compra!');
@@ -247,8 +256,4 @@ function cerrarFactura() {
 
 function imprimirFactura() {
     window.print();
-}
-
-function descargarFactura() {
-    // Implementar la generación y descarga de PDF
 }
